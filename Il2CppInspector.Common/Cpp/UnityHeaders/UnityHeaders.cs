@@ -101,10 +101,30 @@ namespace Il2CppInspector.Cpp.UnityHeaders
         public static UnityHeaders GetHeadersForVersion(UnityVersion version) =>
             new UnityHeaders(GetTypeHeaderForVersion(version), GetAPIHeaderForVersion(version));
 
-        public static UnityResource GetTypeHeaderForVersion(UnityVersion version) => GetAllTypeHeaders().First(r => r.VersionRange.Contains(version));
+// Get the most specific (latest-starting) header which supports the given Unity version.
+// Header ranges may overlap because some older ranges have no upper bound.
+public static UnityResource GetTypeHeaderForVersion(UnityVersion version) =>
+    GetAllTypeHeaders()
+        .Where(r => r.VersionRange.Contains(version))
+        .OrderByDescending(r => (
+            r.VersionRange.Min.Major,
+            r.VersionRange.Min.Minor,
+            r.VersionRange.Min.Update,
+            (int)r.VersionRange.Min.BuildType,
+            r.VersionRange.Min.BuildNumber))
+        .First();
 
-        // Get the API header file which supports the given version of Unity
-        public static UnityResource GetAPIHeaderForVersion(UnityVersion version) => GetAllAPIHeaders().First(r => r.VersionRange.Contains(version));
+// Get the most specific (latest-starting) API header which supports the given Unity version.
+public static UnityResource GetAPIHeaderForVersion(UnityVersion version) =>
+    GetAllAPIHeaders()
+        .Where(r => r.VersionRange.Contains(version))
+        .OrderByDescending(r => (
+            r.VersionRange.Min.Major,
+            r.VersionRange.Min.Minor,
+            r.VersionRange.Min.Update,
+            (int)r.VersionRange.Min.BuildType,
+            r.VersionRange.Min.BuildNumber))
+        .First();
 
         // Guess which header file(s) correspond to the given metadata+binary.
         // Note that this may match multiple headers due to structural changes between versions
